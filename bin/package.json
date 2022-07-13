@@ -1,0 +1,29 @@
+{
+    "name": "bunc",
+    "version": "1.0.6",
+    "main": "src/index.ts",
+    "repository": "https://github.com/DhanielB/bunc.git",
+    "author": "Dhaniel Brandão <dhanielbrandao2@gmail.com>",
+    "license": "MIT",
+    "bin": {
+        "bunc": "bin/src/index.js"
+    },
+    "scripts": {
+        "dev": "sucrase-node src/index.ts",
+        "start": "node ./bin/src/index.js",
+        "build": "npx tsc"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.3",
+        "sucrase": "^3.23.0"
+    },
+    "dependencies": {
+        "axios": "^0.27.2",
+        "big-json": "^3.1.0",
+        "chalk": "4.1.2",
+        "commander": "^9.3.0",
+        "fast-extract": "^0.3.3",
+        "path": "^0.12.7",
+        "tar.gz": "^1.0.7"
+    }
+}
