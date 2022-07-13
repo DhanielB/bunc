@@ -8,10 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import fs from "fs";
-import path from "path";
-import http from "http";
-import axios from "axios";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const http_1 = __importDefault(require("http"));
+const axios_1 = __importDefault(require("axios"));
 class packageManager {
     constructor() {
         this.packageMain = [];
@@ -19,7 +23,7 @@ class packageManager {
     }
     download(currentWorkingDirectory, packageName, IsPackageDependency = true, packageVersion) {
         return __awaiter(this, void 0, void 0, function* () {
-            const registry = yield axios.get(`https://registry.npmjs.org/${packageName}`);
+            const registry = yield axios_1.default.get(`https://registry.npmjs.org/${packageName}`);
             const data = registry["data"];
             var packageSelectedVersion = data["dist-tags"]["latest"];
             if (IsPackageDependency) {
@@ -29,11 +33,11 @@ class packageManager {
             const packageVersionData = data["versions"][packageSelectedVersion];
             const packageTarball = `http://${packageVersionData["dist"]["tarball"].substring(8)}`;
             const packageTarballName = packageTarball.split("/").reverse()[0];
-            const file = fs.createWriteStream(path.resolve(currentWorkingDirectory, "modules", packageTarballName));
-            if (!fs.existsSync(path.resolve(currentWorkingDirectory, "modules"))) {
-                fs.mkdirSync(path.resolve(currentWorkingDirectory, "modules"));
+            const file = fs_1.default.createWriteStream(path_1.default.resolve(currentWorkingDirectory, "modules", packageTarballName));
+            if (!fs_1.default.existsSync(path_1.default.resolve(currentWorkingDirectory, "modules"))) {
+                fs_1.default.mkdirSync(path_1.default.resolve(currentWorkingDirectory, "modules"));
             }
-            http.get(packageTarball, (response) => __awaiter(this, void 0, void 0, function* () {
+            http_1.default.get(packageTarball, (response) => __awaiter(this, void 0, void 0, function* () {
                 yield response.pipe(file);
             }));
             for (let packageDependency in packageVersionData["dependencies"]) {
@@ -47,4 +51,4 @@ class packageManager {
         });
     }
 }
-export default packageManager;
+exports.default = packageManager;

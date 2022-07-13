@@ -1,9 +1,14 @@
-import fs from "fs";
-import path from "path";
-export default function bundle(filename, currentWorkingDirectory) {
-    const mainPath = path.resolve(currentWorkingDirectory);
-    const resolvedPath = path.resolve(filename);
-    const checkPath = fs.existsSync(resolvedPath);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+function bundle(filename, currentWorkingDirectory) {
+    const mainPath = path_1.default.resolve(currentWorkingDirectory);
+    const resolvedPath = path_1.default.resolve(filename);
+    const checkPath = fs_1.default.existsSync(resolvedPath);
     if (!checkPath) {
         return {
             sucess: false,
@@ -12,7 +17,7 @@ export default function bundle(filename, currentWorkingDirectory) {
             error: "Not found file",
         };
     }
-    const fileContent = fs.readFileSync(resolvedPath).toString();
+    const fileContent = fs_1.default.readFileSync(resolvedPath).toString();
     const response = fileContent;
     return {
         sucess: true,
@@ -22,3 +27,4 @@ export default function bundle(filename, currentWorkingDirectory) {
         error: null,
     };
 }
+exports.default = bundle;
