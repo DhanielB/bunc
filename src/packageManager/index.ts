@@ -54,8 +54,6 @@ class packageManager {
       const packageDependencyVersion =
         packageVersionData["dependencies"][packageDependency];
 
-      console.log(`Added ${packageDependency}@${packageDependencyVersion}`);
-
       if (!this.packageLock.includes(packageDependency)) {
         this.download(
           currentWorkingDirectory,
@@ -66,7 +64,7 @@ class packageManager {
       }
     }
 
-    return this.packageLock;
+    return path.resolve(currentWorkingDirectory, "modules", packageTarballName);
   }
 }
 

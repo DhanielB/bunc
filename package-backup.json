@@ -14,7 +14,6 @@
     "build": "npx tsc"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.13",
     "@types/git-username": "^1.0.2",
     "@types/node": "^18.0.3",
     "sucrase": "^3.23.0"
@@ -26,9 +25,7 @@
     "commander": "^9.3.0",
     "enquirer": "^2.3.6",
     "fast-extract": "^0.3.3",
-    "fs-extra": "^10.1.0",
     "git-username": "^1.0.0",
-    "inly": "^4.0.8",
     "path": "^0.12.7",
     "tar.gz": "^1.0.7"
   }
