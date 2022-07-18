@@ -4,30 +4,25 @@
 
 // @ts-ignore
 import fs from "fs";
-// @ts-ignore
-import inly from "inly"
+import jaguar from "jaguar";
 import path from "path";
 import chalk from "chalk";
-import fsExtra from "fs-extra"
 import { prompt } from "enquirer";
 import { version } from "../package.json";
 // @ts-ignore
 import bigJson from "big-json";
 import { program } from "commander";
 import gitUsername from "git-username";
-
-import bundle from "./bundle";
 import packageManager from "./packageManager";
 
 const manager = new packageManager();
-
+interface IError {
+  message: string;
+  requireStack: string[];
+}
 interface IPackageData {
   scripts: string[];
 }
-
-console.log(
-  `${chalk.gray("$")} ${chalk.bold(chalk.magenta(`Tinner ${version}`))}\n`
-);
 
 const startTime = performance.now();
 
@@ -39,6 +34,12 @@ const init = program
   .command("init")
   .description("Start a project fast")
   .action(async (command: string) => {
+    console.log(
+      `${chalk.gray("$")} ${chalk.bold(chalk.magenta(`Tinner`))} ${chalk.gray(
+        version
+      )}\n`
+    );
+
     const defaultVersion = "1.0.1";
     const defaultEntryPoint = "src/index.js";
     const defaultProjectName = currentWorkingDirectory.split("/").reverse()[0];
@@ -139,13 +140,19 @@ init.option("-y, --y, -yield, --yield").action(() => {
 
   fs.writeFileSync(packagePath, data);
 
-  console.log(`${chalk.green('sucess')} Saved package.json`)
+  console.log(`${chalk.green("sucess")} Saved package.json`);
 });
 
 program
   .command("run [command]")
   .description("Run a javascript file")
   .action((command: string) => {
+    console.log(
+      `${chalk.gray("$")} ${chalk.bold(chalk.magenta(`Tinner`))} ${chalk.gray(
+        command
+      )}\n`
+    );
+
     if (command == undefined) {
       const packageFile = path.resolve(currentWorkingDirectory, "package.json");
 
@@ -191,28 +198,24 @@ program
 
       if (!isScript) {
         try {
-          const { sucess, result, error, code } = bundle(
-            command,
-            currentWorkingDirectory
-          );
+          require("sucrase/register");
+          const resolvedPath = path.resolve(command);
 
-          if (sucess) {
-            console.log(
-              `${chalk.bold(
-                chalk.bgBlack(chalk.green("sucess"))
-              )} Bundled with sucess (${chalk.bold(
-                chalk.yellow(command)
-              )})...\n`
-            );
-
+          if (fs.existsSync(resolvedPath)) {
+            require(resolvedPath);
             isFile = true;
-          } else {
-            if (code != -5) {
-              console.log(error);
-            }
           }
         } catch (err) {
-          // pass
+          //@ts-ignore
+          const error: IError = err;
+
+          console.log(
+            `${chalk.bold(chalk.bgBlack(chalk.red("warn")))} ${chalk.bold(
+              chalk.gray(
+                `${error.message}\nRequire stack:\n- ${error.requireStack}`
+              )
+            )}`
+          );
         }
       }
 
@@ -232,6 +235,12 @@ program
   .command("add [package]")
   .description("Add a package")
   .action(async (packageToInstall: string) => {
+    console.log(
+      `${chalk.gray("$")} ${chalk.bold(chalk.magenta(`Tinner`))} ${chalk.gray(
+        packageToInstall
+      )}\n`
+    );
+
     if (!packageToInstall) {
       console.log(
         `${chalk.bold(
@@ -249,38 +258,36 @@ program
       packageToInstall,
       true
     );
-    
-    const from = path.resolve('modules', 'axios-0.27.2.tgz')
-    const to = path.resolve(currentWorkingDirectory, "modules", from.split('/').reverse()[0])
 
-    const extract = inly(from, to);
-        
-    extract.on('file', (name: string) => {
-    	console.log(name);
-    });
+    const from = path.resolve("modules", "axios-0.27.2.tgz");
 
-    extract.on('error', async (error: string) => {
-      console.log(error);
-    });
+    const filename = from.split("/").reverse()[0];
+    const to = path.resolve(
+      "modules",
+      filename.substring(0, filename.length - 6)
+    );
 
-    extract.on('end', () => {
-        console.log('done.');
-    
-    	fsExtra.rename('modules/package', 'modules/tinner')
-    });
-
+    //jaguar and not downloading...
   });
 
 program.parse();
 
 const endTime = performance.now();
 
+var anExisttingError = false;
+
 process.on("unhandledRejection", () => {
-  console.warn(`\n${chalk.red("error")} Command failed with exit code 1.`);
-  console.log(`Done in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
-  process.exit(1);
+  anExisttingError = true;
+
+  if (!anExisttingError) {
+    console.warn(`\n${chalk.red("error")} Command failed with exit code 1.`);
+    console.log(`Done in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+    process.exit(1);
+  }
 });
 
 process.on("exit", () => {
-  console.log(`\nDone in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+  if (!anExisttingError) {
+    console.log(`\nDone in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+  }
 });
