@@ -4,7 +4,6 @@
 
 // @ts-ignore
 import fs from "fs";
-import jaguar from "jaguar";
 import path from "path";
 import chalk from "chalk";
 import { prompt } from "enquirer";

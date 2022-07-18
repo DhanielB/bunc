@@ -6,21 +6,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-ignore
 const fs_1 = __importDefault(require("fs"));
-// @ts-ignore
-const inly_1 = __importDefault(require("inly"));
 const path_1 = __importDefault(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
 const enquirer_1 = require("enquirer");
 const package_json_1 = require("../package.json");
 // @ts-ignore
 const big_json_1 = __importDefault(require("big-json"));
 const commander_1 = require("commander");
 const git_username_1 = __importDefault(require("git-username"));
-const bundle_1 = __importDefault(require("./bundle"));
 const packageManager_1 = __importDefault(require("./packageManager"));
 const manager = new packageManager_1.default();
-console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner ${package_json_1.version}`))}\n`);
 const startTime = performance.now();
 const currentWorkingDirectory = process.cwd();
 commander_1.program.version(package_json_1.version, "-v, --version", "output the current version");
@@ -28,6 +23,7 @@ const init = commander_1.program
     .command("init")
     .description("Start a project fast")
     .action(async (command) => {
+    console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(package_json_1.version)}\n`);
     const defaultVersion = "1.0.1";
     const defaultEntryPoint = "src/index.js";
     const defaultProjectName = currentWorkingDirectory.split("/").reverse()[0];
@@ -104,12 +100,13 @@ init.option("-y, --y, -yield, --yield").action(() => {
   "license": "MIT"
 }`;
     fs_1.default.writeFileSync(packagePath, data);
-    console.log(`${chalk_1.default.green('sucess')} Saved package.json`);
+    console.log(`${chalk_1.default.green("sucess")} Saved package.json`);
 });
 commander_1.program
     .command("run [command]")
     .description("Run a javascript file")
     .action((command) => {
+    console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(command)}\n`);
     if (command == undefined) {
         const packageFile = path_1.default.resolve(currentWorkingDirectory, "package.json");
         const readStream = fs_1.default.createReadStream(packageFile);
@@ -139,19 +136,17 @@ commander_1.program
         }
         if (!isScript) {
             try {
-                const { sucess, result, error, code } = (0, bundle_1.default)(command, currentWorkingDirectory);
-                if (sucess) {
-                    console.log(`${chalk_1.default.bold(chalk_1.default.bgBlack(chalk_1.default.green("sucess")))} Bundled with sucess (${chalk_1.default.bold(chalk_1.default.yellow(command))})...\n`);
+                require("sucrase/register");
+                const resolvedPath = path_1.default.resolve(command);
+                if (fs_1.default.existsSync(resolvedPath)) {
+                    require(resolvedPath);
                     isFile = true;
-                }
-                else {
-                    if (code != -5) {
-                        console.log(error);
-                    }
                 }
             }
             catch (err) {
-                // pass
+                //@ts-ignore
+                const error = err;
+                console.log(`${chalk_1.default.bold(chalk_1.default.bgBlack(chalk_1.default.red("warn")))} ${chalk_1.default.bold(chalk_1.default.gray(`${error.message}\nRequire stack:\n- ${error.requireStack}`))}`);
             }
         }
         if (!(isFile || isScript)) {
@@ -164,32 +159,30 @@ commander_1.program
     .command("add [package]")
     .description("Add a package")
     .action(async (packageToInstall) => {
+    console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(packageToInstall)}\n`);
     if (!packageToInstall) {
         console.log(`${chalk_1.default.bold(chalk_1.default.bgBlack(chalk_1.default.red("warn")))} Missing a package command, usage (${chalk_1.default.bold("add [package]")})...\n`);
         process.exit(1);
     }
     const packageInstalled = await manager.download(currentWorkingDirectory, packageToInstall, true);
-    const from = path_1.default.resolve('modules', 'axios-0.27.2.tgz');
-    const to = path_1.default.resolve(currentWorkingDirectory, "modules", from.split('/').reverse()[0]);
-    const extract = (0, inly_1.default)(from, to);
-    extract.on('file', (name) => {
-        console.log(name);
-    });
-    extract.on('error', async (error) => {
-        console.log(error);
-    });
-    extract.on('end', () => {
-        console.log('done.');
-        fs_extra_1.default.rename('modules/package', 'modules/tinner');
-    });
+    const from = path_1.default.resolve("modules", "axios-0.27.2.tgz");
+    const filename = from.split("/").reverse()[0];
+    const to = path_1.default.resolve("modules", filename.substring(0, filename.length - 6));
+    //jaguar and not downloading...
 });
 commander_1.program.parse();
 const endTime = performance.now();
+var anExisttingError = false;
 process.on("unhandledRejection", () => {
-    console.warn(`\n${chalk_1.default.red("error")} Command failed with exit code 1.`);
-    console.log(`Done in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
-    process.exit(1);
+    anExisttingError = true;
+    if (!anExisttingError) {
+        console.warn(`\n${chalk_1.default.red("error")} Command failed with exit code 1.`);
+        console.log(`Done in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+        process.exit(1);
+    }
 });
 process.on("exit", () => {
-    console.log(`\nDone in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+    if (!anExisttingError) {
+        console.log(`\nDone in ${Math.abs(startTime - endTime).toFixed(2)}s.`);
+    }
 });

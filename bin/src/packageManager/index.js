@@ -32,11 +32,12 @@ class packageManager {
         });
         for (let packageDependency in packageVersionData["dependencies"]) {
             const packageDependencyVersion = packageVersionData["dependencies"][packageDependency];
+            console.log(`Added ${packageDependency}@${packageDependencyVersion}`);
             if (!this.packageLock.includes(packageDependency)) {
                 this.download(currentWorkingDirectory, packageDependency, false, packageDependencyVersion);
             }
         }
-        return path_1.default.resolve(currentWorkingDirectory, "modules", packageTarballName);
+        return this.packageLock;
     }
 }
 exports.default = packageManager;

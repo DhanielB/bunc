@@ -23,20 +23,11 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "baltar": "^1.0.1",
     "big-json": "^3.1.0",
     "chalk": "4.1.2",
     "commander": "^9.3.0",
     "enquirer": "^2.3.6",
-    "fast-extract": "^0.3.3",
-    "fs-extra": "^10.1.0",
     "git-username": "^1.0.0",
-    "inly": "^4.0.8",
-    "jaguar": "^6.0.1",
-    "path": "^0.12.7",
-    "tar": "^6.1.11",
-    "tar-stream": "^2.2.0",
-    "tar-to-zip": "^3.0.0",
-    "tar.gz": "^1.0.7"
+    "path": "^0.12.7"
   }
 }
