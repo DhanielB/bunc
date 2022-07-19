@@ -1,5 +1,28 @@
 #!/usr/bin/env node
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -16,6 +39,7 @@ const commander_1 = require("commander");
 const git_username_1 = __importDefault(require("git-username"));
 const packageManager_1 = __importDefault(require("./packageManager"));
 const manager = new packageManager_1.default();
+var endTime;
 const startTime = performance.now();
 const currentWorkingDirectory = process.cwd();
 commander_1.program.version(package_json_1.version, "-v, --version", "output the current version");
@@ -24,6 +48,7 @@ const init = commander_1.program
     .description("Start a project fast")
     .action(async (command) => {
     console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(package_json_1.version)}\n`);
+    endTime = performance.now();
     const defaultVersion = "1.0.1";
     const defaultEntryPoint = "src/index.js";
     const defaultProjectName = currentWorkingDirectory.split("/").reverse()[0];
@@ -107,6 +132,7 @@ commander_1.program
     .description("Run a javascript file")
     .action((command) => {
     console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(command)}\n`);
+    endTime = performance.now();
     if (command == undefined) {
         const packageFile = path_1.default.resolve(currentWorkingDirectory, "package.json");
         const readStream = fs_1.default.createReadStream(packageFile);
@@ -136,10 +162,11 @@ commander_1.program
         }
         if (!isScript) {
             try {
-                require("sucrase/register");
+                //@ts-ignore
+                Promise.resolve().then(() => __importStar(require("sucrase/register")));
                 const resolvedPath = path_1.default.resolve(command);
                 if (fs_1.default.existsSync(resolvedPath)) {
-                    require(resolvedPath);
+                    Promise.resolve().then(() => __importStar(require(resolvedPath)));
                     isFile = true;
                 }
             }
@@ -160,18 +187,17 @@ commander_1.program
     .description("Add a package")
     .action(async (packageToInstall) => {
     console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(packageToInstall)}\n`);
+    endTime = performance.now();
     if (!packageToInstall) {
         console.log(`${chalk_1.default.bold(chalk_1.default.bgBlack(chalk_1.default.red("warn")))} Missing a package command, usage (${chalk_1.default.bold("add [package]")})...\n`);
         process.exit(1);
     }
-    const packageInstalled = await manager.download(currentWorkingDirectory, packageToInstall, true);
+    const packageInstalled = await manager.downloadAndExtract(currentWorkingDirectory, packageToInstall, true);
     const from = path_1.default.resolve("modules", "axios-0.27.2.tgz");
     const filename = from.split("/").reverse()[0];
     const to = path_1.default.resolve("modules", filename.substring(0, filename.length - 6));
-    //jaguar and not downloading...
 });
 commander_1.program.parse();
-const endTime = performance.now();
 var anExisttingError = false;
 process.on("unhandledRejection", () => {
     anExisttingError = true;

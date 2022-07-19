@@ -12,6 +12,9 @@ import { version } from "../package.json";
 import bigJson from "big-json";
 import { program } from "commander";
 import gitUsername from "git-username";
+//@ts-ignore
+import jaguar from "jaguar";
+
 import packageManager from "./packageManager";
 
 const manager = new packageManager();
@@ -23,6 +26,7 @@ interface IPackageData {
   scripts: string[];
 }
 
+var endTime: number;
 const startTime = performance.now();
 
 const currentWorkingDirectory = process.cwd();
@@ -38,6 +42,8 @@ const init = program
         version
       )}\n`
     );
+
+    endTime = performance.now();
 
     const defaultVersion = "1.0.1";
     const defaultEntryPoint = "src/index.js";
@@ -152,6 +158,8 @@ program
       )}\n`
     );
 
+    endTime = performance.now();
+
     if (command == undefined) {
       const packageFile = path.resolve(currentWorkingDirectory, "package.json");
 
@@ -197,11 +205,12 @@ program
 
       if (!isScript) {
         try {
-          require("sucrase/register");
+          //@ts-ignore
+          import("sucrase/register");
           const resolvedPath = path.resolve(command);
 
           if (fs.existsSync(resolvedPath)) {
-            require(resolvedPath);
+            import(resolvedPath);
             isFile = true;
           }
         } catch (err) {
@@ -240,6 +249,8 @@ program
       )}\n`
     );
 
+    endTime = performance.now();
+
     if (!packageToInstall) {
       console.log(
         `${chalk.bold(
@@ -252,7 +263,7 @@ program
       process.exit(1);
     }
 
-    const packageInstalled = await manager.download(
+    const packageInstalled = await manager.downloadAndExtract(
       currentWorkingDirectory,
       packageToInstall,
       true
@@ -265,13 +276,9 @@ program
       "modules",
       filename.substring(0, filename.length - 6)
     );
-
-    //jaguar and not downloading...
   });
 
 program.parse();
-
-const endTime = performance.now();
 
 var anExisttingError = false;
 
