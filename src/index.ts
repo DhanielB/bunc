@@ -6,6 +6,7 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
+import lockManager from "./lockManager";
 import { prompt } from "enquirer";
 import { version } from "../package.json";
 // @ts-ignore
@@ -17,7 +18,9 @@ import jaguar from "jaguar";
 
 import packageManager from "./packageManager";
 
-const manager = new packageManager();
+const lockUse = new lockManager();
+const packageUse = new packageManager();
+
 interface IError {
   message: string;
   requireStack: string[];
@@ -199,6 +202,7 @@ program
 
         if (script == command) {
           console.log(chalk.gray(scriptExecute));
+
           isScript = true;
         }
       }
@@ -263,19 +267,29 @@ program
       process.exit(1);
     }
 
-    const packageInstalled = await manager.downloadAndExtract(
+    const packageInstalled = await packageUse.downloadAndExtract(
       currentWorkingDirectory,
       packageToInstall,
       true
     );
+  });
 
-    const from = path.resolve("modules", "axios-0.27.2.tgz");
-
-    const filename = from.split("/").reverse()[0];
-    const to = path.resolve(
-      "modules",
-      filename.substring(0, filename.length - 6)
+program
+  .command("remove [package]")
+  .description("Remove a package installed")
+  .action((packageToRemove: string) => {
+    console.log(
+      `${chalk.gray("$")} ${chalk.bold(chalk.magenta(`Tinner`))} ${chalk.gray(
+        packageToRemove
+      )}\n`
     );
+
+    endTime = performance.now();
+
+    const getLock = lockUse.get(currentWorkingDirectory);
+    const packageToRemovePath = path.resolve("nodd_modules", packageToRemove);
+
+    lockUse.save(path.resolve(currentWorkingDirectory, "bunc.lock"), getLock);
   });
 
 program.parse();

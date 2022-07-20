@@ -10,32 +10,26 @@ const wget_1 = __importDefault(require("wget"));
 const axios_1 = __importDefault(require("axios"));
 //@ts-ignore
 const jaguar_1 = __importDefault(require("jaguar"));
+//@ts-ignore
+const glob_1 = __importDefault(require("glob"));
 class packageManager {
+    packageMain;
+    packageLock;
     constructor() {
         this.packageMain = [];
         this.packageLock = [];
-        this.extract = this.extract;
     }
-    move(directory, packageName) {
-        console.log('a');
-        fs_extra_1.default.readdir(path_1.default.resolve(directory, "package"), async (err, files) => {
-            console.log('b');
-            for (let fileIndex in files) {
-                console.log('c');
-                const file = files[fileIndex];
-                const from = path_1.default.resolve(directory, "package", file);
-                const to = path_1.default.resolve(from.split("/package")[0] + from.split("/package")[1]);
-                console.log("Moved?", to, to.split(packageName)[1].slice(-1) != '');
-                if (to.split(packageName)[1].slice(-1) != '') {
-                    await fs_extra_1.default.move(from, to, { overwrite: true }, (err) => {
-                        if (err)
-                            throw err;
-                        console.log("Moved", to);
-                    });
-                }
+    async move(directory, packageName) {
+        const packagePath = path_1.default.resolve(directory, "package");
+        (0, glob_1.default)(`${packagePath}/*`, (err, files) => {
+            if (err)
+                throw err;
+            for (let file of files) {
+                const to = path_1.default.resolve(file.replaceAll("package/", ""));
+                fs_extra_1.default.moveSync(file, to);
             }
+            fs_extra_1.default.removeSync(packagePath);
         });
-        fs_extra_1.default.removeSync(`${directory}/package`);
         return directory;
     }
     extract(from, to, packageName) {
@@ -46,7 +40,9 @@ class packageManager {
         extractFile.on("error", (error) => {
             console.error(error);
         });
-        this.move(to, packageName);
+        extractFile.on("end", () => {
+            this.move(to, packageName);
+        });
         return to;
     }
     async downloadAndExtract(currentWorkingDirectory, packageName, IsPackageDependency = true, packageVersion) {
@@ -60,11 +56,11 @@ class packageManager {
         const packageVersionData = data["versions"][packageSelectedVersion];
         const packageTarball = `http://${packageVersionData["dist"]["tarball"].substring(8)}`;
         const packageTarballName = packageTarball.split("/").reverse()[0];
-        if (!fs_extra_1.default.existsSync(path_1.default.resolve(currentWorkingDirectory, "nodd_modules"))) {
-            fs_extra_1.default.mkdirSync(path_1.default.resolve(currentWorkingDirectory, "nodd_modules"));
+        if (!fs_extra_1.default.existsSync(path_1.default.resolve(currentWorkingDirectory, "node_modules"))) {
+            fs_extra_1.default.mkdirSync(path_1.default.resolve(currentWorkingDirectory, "node_modules"));
         }
         const src = `https://registry.npmjs.com/${packageName}/-/${packageTarballName}`;
-        const output = path_1.default.resolve(currentWorkingDirectory, "nodd_modules", packageTarballName);
+        const output = path_1.default.resolve(currentWorkingDirectory, "node_modules", packageTarballName);
         const download = await wget_1.default.download(src, output);
         download.on("error", function (err) {
             console.log(err);
@@ -78,7 +74,7 @@ class packageManager {
                 .reverse()[0]
                 .substring(0, output.split("/").reverse()[0].indexOf(".") - 2);
             const from = path_1.default.resolve(output);
-            const to = path_1.default.resolve(`nodd_modules/${packageName}`);
+            const to = path_1.default.resolve(`node_modules/${packageName}`);
             this.extract(from, to, packageName);
         });
         for (let packageDependency in packageVersionData["dependencies"]) {

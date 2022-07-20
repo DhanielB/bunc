@@ -7,6 +7,8 @@ import wget from "wget";
 import axios from "axios";
 //@ts-ignore
 import jaguar from "jaguar";
+//@ts-ignore
+import glob from "glob";
 
 class packageManager {
   packageMain: any[];
@@ -15,36 +17,22 @@ class packageManager {
   constructor() {
     this.packageMain = [];
     this.packageLock = [];
-    this.extract = this.extract;
   }
 
-  move(directory: string, packageName: string): string {
-    console.log('a')
-    fs.readdir(path.resolve(directory, "package"), async (err, files) => {
-      console.log('b')
-      for (let fileIndex in files) {
-        console.log('c')
+  async move(directory: string, packageName: string): Promise<string> {
+    const packagePath = path.resolve(directory, "package");
 
-        const file = files[fileIndex]
+    glob(`${packagePath}/*`, (err: string, files: string[]) => {
+      if (err) throw err;
 
-        const from = path.resolve(directory, "package", file);
-        const to = path.resolve(
-          from.split("/package")[0] + from.split("/package")[1]
-        );
+      for (let file of files) {
+        const to = path.resolve(file.replaceAll("package/", ""));
 
-        console.log("Moved?", to, to.split(packageName)[1].slice(-1) != '');
-
-        if(to.split(packageName)[1].slice(-1) != '') {
-          await fs.move(from, to, { overwrite: true }, (err) => {
-            if (err) throw err;
-
-            console.log("Moved", to);
-          });
-        }
+        fs.moveSync(file, to);
       }
-    });
 
-    fs.removeSync(`${directory}/package`)
+      fs.removeSync(packagePath);
+    });
 
     return directory;
   }
@@ -60,7 +48,9 @@ class packageManager {
       console.error(error);
     });
 
-    this.move(to, packageName);
+    extractFile.on("end", () => {
+      this.move(to, packageName);
+    });
 
     return to;
   }
@@ -90,14 +80,14 @@ class packageManager {
     ].substring(8)}`;
     const packageTarballName = packageTarball.split("/").reverse()[0];
 
-    if (!fs.existsSync(path.resolve(currentWorkingDirectory, "nodd_modules"))) {
-      fs.mkdirSync(path.resolve(currentWorkingDirectory, "nodd_modules"));
+    if (!fs.existsSync(path.resolve(currentWorkingDirectory, "node_modules"))) {
+      fs.mkdirSync(path.resolve(currentWorkingDirectory, "node_modules"));
     }
 
     const src = `https://registry.npmjs.com/${packageName}/-/${packageTarballName}`;
     const output = path.resolve(
       currentWorkingDirectory,
-      "nodd_modules",
+      "node_modules",
       packageTarballName
     );
 
@@ -118,7 +108,7 @@ class packageManager {
         .substring(0, output.split("/").reverse()[0].indexOf(".") - 2);
 
       const from = path.resolve(output);
-      const to = path.resolve(`nodd_modules/${packageName}`);
+      const to = path.resolve(`node_modules/${packageName}`);
 
       this.extract(from, to, packageName);
     });

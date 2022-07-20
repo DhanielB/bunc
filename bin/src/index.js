@@ -31,6 +31,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
+const lockManager_1 = __importDefault(require("./lockManager"));
 const enquirer_1 = require("enquirer");
 const package_json_1 = require("../package.json");
 // @ts-ignore
@@ -38,7 +39,8 @@ const big_json_1 = __importDefault(require("big-json"));
 const commander_1 = require("commander");
 const git_username_1 = __importDefault(require("git-username"));
 const packageManager_1 = __importDefault(require("./packageManager"));
-const manager = new packageManager_1.default();
+const lockUse = new lockManager_1.default();
+const packageUse = new packageManager_1.default();
 var endTime;
 const startTime = performance.now();
 const currentWorkingDirectory = process.cwd();
@@ -192,10 +194,17 @@ commander_1.program
         console.log(`${chalk_1.default.bold(chalk_1.default.bgBlack(chalk_1.default.red("warn")))} Missing a package command, usage (${chalk_1.default.bold("add [package]")})...\n`);
         process.exit(1);
     }
-    const packageInstalled = await manager.downloadAndExtract(currentWorkingDirectory, packageToInstall, true);
-    const from = path_1.default.resolve("modules", "axios-0.27.2.tgz");
-    const filename = from.split("/").reverse()[0];
-    const to = path_1.default.resolve("modules", filename.substring(0, filename.length - 6));
+    const packageInstalled = await packageUse.downloadAndExtract(currentWorkingDirectory, packageToInstall, true);
+});
+commander_1.program
+    .command("remove [package]")
+    .description("Remove a package installed")
+    .action((packageToRemove) => {
+    console.log(`${chalk_1.default.gray("$")} ${chalk_1.default.bold(chalk_1.default.magenta(`Tinner`))} ${chalk_1.default.gray(packageToRemove)}\n`);
+    endTime = performance.now();
+    const getLock = lockUse.get(currentWorkingDirectory);
+    const packageToRemovePath = path_1.default.resolve("nodd_modules", packageToRemove);
+    lockUse.save(path_1.default.resolve(currentWorkingDirectory, "bunc.lock"), getLock);
 });
 commander_1.program.parse();
 var anExisttingError = false;

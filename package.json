@@ -1,6 +1,6 @@
 {
   "name": "bunc",
-  "version": "1.0.1",
+  "version": "1.0.7",
   "main": "src/index.ts",
   "repository": "https://github.com/DhanielB/bunc.git",
   "author": "Dhaniel Brandão <dhanielbrandao2@gmail.com>",
