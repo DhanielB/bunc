@@ -1,6 +1,6 @@
 {
   "name": "bunc",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "src/index.ts",
   "repository": "https://github.com/DhanielB/bunc.git",
   "author": "Dhaniel Brandão <dhanielbrandao2@gmail.com>",
@@ -25,15 +25,11 @@
     "axios": "^0.27.2",
     "big-json": "^3.1.0",
     "chalk": "4.1.2",
-    "cli-progress": "^3.11.2",
-    "cli-spinners": "^2.6.1",
     "commander": "^9.3.0",
     "enquirer": "^2.3.6",
     "fs-extra": "^10.1.0",
     "git-username": "^1.0.0",
     "jaguar": "^6.0.1",
-    "jetty": "^0.2.1",
-    "log-update": "^5.0.1",
     "path": "^0.12.7",
     "wget": "^0.0.1"
   }

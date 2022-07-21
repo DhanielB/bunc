@@ -9,6 +9,21 @@ import axios from "axios";
 import jaguar from "jaguar";
 //@ts-ignore
 import glob from "glob";
+import lockManager from "../lockManager";
+
+interface IDependencies {
+  [key: string]: string;
+}
+
+interface IGenerate {
+  name?: string;
+  version?: string;
+  resolved?: string;
+  integrity?: string;
+  dependencies?: IDependencies;
+}
+
+const lockUse = new lockManager();
 
 class packageManager {
   packageMain: any[];
@@ -28,7 +43,7 @@ class packageManager {
       for (let file of files) {
         const to = path.resolve(file.replaceAll("package/", ""));
 
-        fs.moveSync(file, to);
+        fs.moveSync(file, to, { overwrite: true });
       }
 
       fs.removeSync(packagePath);
@@ -50,6 +65,8 @@ class packageManager {
 
     extractFile.on("end", () => {
       this.move(to, packageName);
+
+      fs.removeSync(from);
     });
 
     return to;
@@ -79,15 +96,15 @@ class packageManager {
       "tarball"
     ].substring(8)}`;
     const packageTarballName = packageTarball.split("/").reverse()[0];
-
-    if (!fs.existsSync(path.resolve(currentWorkingDirectory, "node_modules"))) {
-      fs.mkdirSync(path.resolve(currentWorkingDirectory, "node_modules"));
+    const packageIntegrity = packageVersionData["dist"]["integrity"];
+    if (!fs.existsSync(path.resolve(currentWorkingDirectory, "nodd_modules"))) {
+      fs.mkdirSync(path.resolve(currentWorkingDirectory, "nodd_modules"));
     }
 
     const src = `https://registry.npmjs.com/${packageName}/-/${packageTarballName}`;
     const output = path.resolve(
       currentWorkingDirectory,
-      "node_modules",
+      "nodd_modules",
       packageTarballName
     );
 
@@ -108,16 +125,28 @@ class packageManager {
         .substring(0, output.split("/").reverse()[0].indexOf(".") - 2);
 
       const from = path.resolve(output);
-      const to = path.resolve(`node_modules/${packageName}`);
+      const to = path.resolve(`nodd_modules/${packageName}`);
 
       this.extract(from, to, packageName);
     });
+
+    var packageDataToAdd: IGenerate = {
+      name: `${packageName}@${packageSelectedVersion}` ,
+      version: packageSelectedVersion,
+      resolved: src,
+      integrity: packageIntegrity,
+      dependencies: {}
+    };
+
+    var haveDependecies = false;
+
+    console.log(`Added ${packageName}@${packageSelectedVersion}`);
 
     for (let packageDependency in packageVersionData["dependencies"]) {
       const packageDependencyVersion =
         packageVersionData["dependencies"][packageDependency];
 
-      console.log(`Added ${packageDependency}@${packageDependencyVersion}`);
+      packageDataToAdd.dependencies[packageDependency] = packageDependencyVersion;
 
       if (!this.packageLock.includes(packageDependency)) {
         this.downloadAndExtract(
@@ -127,7 +156,22 @@ class packageManager {
           packageDependencyVersion
         );
       }
+
+      haveDependecies = true;
     }
+
+    if(!haveDependecies) {
+      delete packageDataToAdd.dependencies
+    }
+
+    const newLockContent = lockUse.parse(
+      lockUse.add(packageDataToAdd, currentWorkingDirectory)
+    );
+
+    lockUse.save(
+      path.resolve(currentWorkingDirectory, "bunc.lock"),
+      newLockContent
+    );
 
     return this.packageLock;
   }
