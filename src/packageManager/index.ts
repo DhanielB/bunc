@@ -33,6 +33,18 @@ class packageManager {
     this.packageMain = [];
     this.packageLock = [];
   }
+  
+  createBin(bin: IBin, packageName: string, currentWorkingDirectory: string) {
+    for(let binName in bin) {
+      const binFile = bin[binName]
+      const binFrom = path.resolve(currentWorkingDirectory, 'nodd_modules', packageName, binFile)
+      const binTo = path.resolve(currentWorkingDirectory, 'nodd_modules', '.bin', binName)
+
+      console.log(binFrom, binTo)
+
+      fs.copySync(binFrom, binTo, { overwrite: true })
+    }
+  }
 
   async move(directory: string, packageName: string): Promise<string> {
     const packagePath = path.resolve(directory, "package");
@@ -97,6 +109,8 @@ class packageManager {
     ].substring(8)}`;
     const packageTarballName = packageTarball.split("/").reverse()[0];
     const packageIntegrity = packageVersionData["dist"]["integrity"];
+    const packageBin = packageVersionData["bin"]
+
     if (!fs.existsSync(path.resolve(currentWorkingDirectory, "nodd_modules"))) {
       fs.mkdirSync(path.resolve(currentWorkingDirectory, "nodd_modules"));
     }
@@ -118,7 +132,7 @@ class packageManager {
       const progressInteger = Math.ceil(progress);
     });
 
-    download.on("end", (output: string) => {
+    download.on("end", async (output: string) => {
       const filename = output
         .split("/")
         .reverse()[0]
@@ -127,7 +141,8 @@ class packageManager {
       const from = path.resolve(output);
       const to = path.resolve(`nodd_modules/${packageName}`);
 
-      this.extract(from, to, packageName);
+      await this.extract(from, to, packageName);
+      this.createBin(packageBin, packageName, currentWorkingDirectory)
     });
 
     var packageDataToAdd: IGenerate = {
